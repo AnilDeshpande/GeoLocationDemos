@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     LocationRequest locationRequest;
     LocationCallback locationCallback;
     private Location currentLocation;
+
     private int LOCATION_PERMISSION = 100;
 
     Button buttonGetLocation, buttonStopLocation;
@@ -50,6 +51,29 @@ public class MainActivity extends AppCompatActivity {
         textViewLatitude = (TextView)findViewById(R.id.textViewLatitude);
         textViewLongitude = (TextView)findViewById(R.id.textViewLongitude);
 
+        locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(UPDATE_INTERVAL);
+        locationCallback = new LocationCallback(){
+            @Override
+            public void onLocationAvailability(LocationAvailability locationAvailability) {
+                super.onLocationAvailability(locationAvailability);
+                if(locationAvailability.isLocationAvailable()){
+                    Log.i(TAG,"Location is available");
+                }else {
+                    Log.i(TAG,"Location is unavailable");
+                }
+            }
+
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                Log.i(TAG,"Location result is available");
+            }
+        };
+
+
         buttonGetLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -64,56 +88,36 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(UPDATE_INTERVAL);
-        locationCallback = new LocationCallback(){
-            @Override
-            public void onLocationAvailability(LocationAvailability locationAvailability) {
-                super.onLocationAvailability(locationAvailability);
-                if (locationAvailability.isLocationAvailable()){
-                    Log.i(TAG,"Location is available");
-                }else {
-                    Log.i(TAG,"Location is unavailable");
-                }
 
-            }
-
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                super.onLocationResult(locationResult);
-                Log.i(TAG,"Location result is available");
-            }
-        };
     }
 
     private void startGettingLocation() {
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED &&
            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)== PackageManager.PERMISSION_GRANTED){
-            locationProviderClient.requestLocationUpdates(locationRequest, locationCallback, MainActivity.this.getMainLooper());
-            locationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                @Override
-                public void onSuccess(Location location) {
-                    currentLocation  = location;
-                    textViewLatitude.setText("Latitude: "+currentLocation.getLatitude());
-                    textViewLongitude.setText("Longitude: "+currentLocation.getLongitude());
-                }
-            });
+                locationProviderClient.requestLocationUpdates(locationRequest,locationCallback, MainActivity.this.getMainLooper());
+                locationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        currentLocation = location;
+                        textViewLatitude.setText(""+currentLocation.getLatitude());
+                        textViewLongitude.setText(""+currentLocation.getLongitude());
+                    }
+                });
 
-            locationProviderClient.getLastLocation().addOnFailureListener(this, new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.i(TAG,"Exception while getting the location: "+e.getMessage());
-                }
-            });
+                locationProviderClient.getLastLocation().addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.i(TAG, "Exception while getting the location: "+e.getMessage());
+                    }
+                });
+
 
         }else {
             if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)){
                 Toast.makeText(MainActivity.this, "Permission needed", Toast.LENGTH_LONG).show();
             } else {
                 ActivityCompat.requestPermissions(MainActivity.this,
-                        new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        new String[] { Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                         LOCATION_PERMISSION);
             }
         }
@@ -127,11 +131,13 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         startGettingLocation();
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         stopLocationRequests();
+
     }
 }
