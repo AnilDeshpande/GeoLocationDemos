@@ -3,6 +3,7 @@ package com.codetutor.geolocationdemos;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProviders;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -28,20 +29,15 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity {
 
     private static final String TAG = MapsActivity.class.getSimpleName();
 
-    private GoogleMap mMap;
 
     private MapView mapView;
-
-    private static final int UPDATE_INTERVAL = 5000; // 5 seconds
-
-    FusedLocationProviderClient locationProviderClient;
-    LocationRequest locationRequest;
-    LocationCallback locationCallback;
     private Location currentLocation;
+
+    MapsActivityViewModel mapsActivityViewModel;
 
     private int LOCATION_PERMISSION = 100;
 
@@ -50,37 +46,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+
+
         mapView = (MapView)findViewById(R.id.mapView);
         Bundle mapViewBundle = null;
         if(savedInstanceState != null){
             mapViewBundle = savedInstanceState.getBundle(getResources().getString(R.string.google_maps_key));
         }
-
         mapView.onCreate(mapViewBundle);
 
-
-
-        locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(UPDATE_INTERVAL);
-        locationCallback = new LocationCallback(){
-            @Override
-            public void onLocationAvailability(LocationAvailability locationAvailability) {
-                super.onLocationAvailability(locationAvailability);
-                if(locationAvailability.isLocationAvailable()){
-                    Log.i(TAG,"Location is available");
-                }else {
-                    Log.i(TAG,"Location is unavailable");
-                }
-            }
-
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                super.onLocationResult(locationResult);
-                Log.i(TAG,"Location result is available");
-            }
-        };
+        mapsActivityViewModel = ViewModelProviders.of(this).get(MapsActivityViewModel.class);
 
         startGettingLocation();
     }
@@ -121,29 +96,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         mapView.onSaveInstanceState(mapViewBundle);
-    }
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-
-
-
-        // Add a marker in Sydney and move the camera
-        LatLng currentPlace = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-        mMap.addMarker(new MarkerOptions().position(currentPlace).title("Marker in Sydney"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(currentPlace));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPlace, 15.0f));
-
     }
 
     private void startGettingLocation() {
