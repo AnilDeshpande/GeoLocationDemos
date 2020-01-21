@@ -46,6 +46,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private String mAddressOutput;
     private boolean mAddressRequested;
+    private AddressResultReceiver addressResultReceiver;
 
     private int LOCATION_PERMISSION = 100;
 
@@ -76,6 +77,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
 
+        addressResultReceiver = new AddressResultReceiver(new Handler());
         startGettingLocation();
     }
 
@@ -113,6 +115,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     currentLocation = location;
                     SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
                     mapFragment.getMapAsync(MapsActivity.this);
+                    startAddressFetcherService();
                 }
             });
 
@@ -145,8 +148,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         stopLocationRequests();
     }
 
-
-
     private class AddressResultReceiver extends ResultReceiver {
 
         AddressResultReceiver(Handler handler) {
@@ -173,6 +174,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void startAddressFetcherService(){
-        //Intent intent = new Intent(this, )
+        Intent intent = new Intent(this,AddressFetcherService.class );
+        intent.putExtra(Constants.RECEIVER, addressResultReceiver);
+        intent.putExtra(Constants.LOCATION_DATA_EXTRA, currentLocation);
+        startService(intent);
     }
 }
