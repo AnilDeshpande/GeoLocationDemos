@@ -13,6 +13,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -48,6 +51,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean mAddressRequested;
     private AddressResultReceiver addressResultReceiver;
 
+    private static final String ADDRESS_REQUESTED_KEY = "address-request-pending";
+    private static final String LOCATION_ADDRESS_KEY = "location-address";
+
+    TextView textViewAddress;
+    Button buttonGetAddress;
+
     private int LOCATION_PERMISSION = 100;
 
     @Override
@@ -55,7 +64,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        textViewAddress = (TextView)findViewById(R.id.textViewAddress);
+        buttonGetAddress = (Button)findViewById(R.id.buttonGetAddress);
+
+        buttonGetAddress.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getAddress(currentLocation);
+            }
+        });
+
         locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        mAddressRequested = true;
+
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(UPDATE_INTERVAL);
@@ -78,6 +99,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         };
 
         addressResultReceiver = new AddressResultReceiver(new Handler());
+
+        updateValuesFromBundle(savedInstanceState);
         startGettingLocation();
     }
 
@@ -115,7 +138,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     currentLocation = location;
                     SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
                     mapFragment.getMapAsync(MapsActivity.this);
-                    startAddressFetcherService();
+
                 }
             });
 
@@ -157,7 +180,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected void onReceiveResult(int resultCode, Bundle resultData) {
             mAddressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
-            Log.i(TAG,"ResuleCode: "+resultCode+", Address: "+mAddressOutput);
+            textViewAddress.setText(mAddressOutput);
             mAddressRequested = false;
 
         }
@@ -178,5 +201,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         intent.putExtra(Constants.RECEIVER, addressResultReceiver);
         intent.putExtra(Constants.LOCATION_DATA_EXTRA, currentLocation);
         startService(intent);
+    }
+
+    private void updateValuesFromBundle(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            if (savedInstanceState.keySet().contains(ADDRESS_REQUESTED_KEY)) {
+                mAddressRequested = savedInstanceState.getBoolean(ADDRESS_REQUESTED_KEY);
+            }
+            if (savedInstanceState.keySet().contains(LOCATION_ADDRESS_KEY)) {
+                mAddressOutput = savedInstanceState.getString(LOCATION_ADDRESS_KEY);
+                textViewAddress.setText(mAddressOutput);
+                Log.i(TAG, "Address: "+mAddressOutput);
+            }
+        }
     }
 }

@@ -14,7 +14,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -35,7 +34,7 @@
 
         </activity>
 
-        <service android:name=".AddressFetcherService"/>
+        <service android:name=".AddressFetcherService" android:exported="false"/>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

@@ -51,7 +51,7 @@ public class AddressFetcherService extends IntentService {
             }else {
                 StringBuilder addressString = new StringBuilder();
                 Address address = addresses.get(0);
-                for(int i=0;i<address.getMaxAddressLineIndex();i++){
+                for(int i = 0;i<=address.getMaxAddressLineIndex();i++){
                     addressString.append(address.getAddressLine(i)+"\n");
                 }
                 respondWithResilt(Constants.SUCCESS_RESULT, addressString.toString());
