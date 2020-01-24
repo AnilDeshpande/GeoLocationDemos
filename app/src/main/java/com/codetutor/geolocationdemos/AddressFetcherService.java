@@ -19,6 +19,8 @@ public class AddressFetcherService extends IntentService {
 
     private static final String TAG = AddressFetcherService.class.getSimpleName();
 
+    private Location deviceLocation;
+
     private ResultReceiver resultReceiver;
 
     public AddressFetcherService(){
@@ -28,25 +30,27 @@ public class AddressFetcherService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
         resultReceiver = intent.getParcelableExtra(Constants.RECEIVER);
+
         if(resultReceiver==null){
-            Log.i(TAG,"resultReceiver not received");
+            Log.i(TAG,getString(R.string.error_receiver_not_availale));
             return;
         }
 
-        Location latestLocation = intent.getParcelableExtra(Constants.LOCATION_DATA_EXTRA);
-        if(latestLocation==null){
-            Log.i(TAG,"resultReceiver not received");
-            respondWithResilt(Constants.FAILURE_RESULT, "Location not available, can't fetch address");
+        deviceLocation = intent.getParcelableExtra(Constants.LOCATION_DATA_EXTRA);
+
+        if(deviceLocation ==null){
+            Log.i(TAG,getString(R.string.error_location_unavailable));
+            respondWithResilt(Constants.FAILURE_RESULT, getString(R.string.error_location_unavailable));
             return;
         }
 
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         List<Address> addresses = null;
         try{
-            addresses = geocoder.getFromLocation(latestLocation.getLatitude(), latestLocation.getLongitude(),1);
+            addresses = geocoder.getFromLocation(deviceLocation.getLatitude(), deviceLocation.getLongitude(),1);
             if(addresses==null || addresses.size()==0){
-                Log.i(TAG,"Address not avaialable");
-                respondWithResilt(Constants.FAILURE_RESULT, "Address not avaialabl");
+                Log.i(TAG,getString(R.string.error_address_unavailable));
+                respondWithResilt(Constants.FAILURE_RESULT, getString(R.string.error_address_unavailable));
                 return;
             }else {
                 StringBuilder addressString = new StringBuilder();
@@ -57,8 +61,8 @@ public class AddressFetcherService extends IntentService {
                 respondWithResilt(Constants.SUCCESS_RESULT, addressString.toString());
             }
         }catch (IOException e){
-            Log.i(TAG,"Exception while getting address");
-            respondWithResilt(Constants.FAILURE_RESULT, "Exception while getting address");
+            Log.i(TAG,getString(R.string.error_exception_while_getting_address));
+            respondWithResilt(Constants.FAILURE_RESULT, getString(R.string.error_exception_while_getting_address));
         }
 
     }

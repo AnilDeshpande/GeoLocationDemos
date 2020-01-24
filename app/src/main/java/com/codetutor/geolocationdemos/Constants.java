@@ -1,10 +1,10 @@
 package com.codetutor.geolocationdemos;
 
-public class Constants {
-    static final int SUCCESS_RESULT = 0;
-    static final int FAILURE_RESULT = 1;
-    private static final String PACKAGE_NAME = "com.codetutor.geolocationdemos";
-    static final String RECEIVER = PACKAGE_NAME + ".RECEIVER";
-    static final String RESULT_DATA_KEY = PACKAGE_NAME + ".RESULT_DATA_KEY";
-    static final String LOCATION_DATA_EXTRA = PACKAGE_NAME + ".LOCATION_DATA_EXTRA";
+interface Constants {
+    int SUCCESS_RESULT = 0;
+    int FAILURE_RESULT = 1;
+    String PACKAGE_NAME = "com.codetutor.geolocationdemos";
+    String RECEIVER = PACKAGE_NAME + ".RECEIVER";
+    String RESULT_DATA_KEY = PACKAGE_NAME + ".RESULT_DATA_KEY";
+    String LOCATION_DATA_EXTRA = PACKAGE_NAME + ".LOCATION_DATA_EXTRA";
 }

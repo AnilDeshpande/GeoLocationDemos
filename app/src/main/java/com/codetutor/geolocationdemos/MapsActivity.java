@@ -24,7 +24,6 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -47,15 +46,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LocationCallback locationCallback;
     private Location currentLocation;
 
-    private String mAddressOutput;
-    private boolean mAddressRequested;
+    private String locationAddress;
+    private boolean isAddressRequested;
     private AddressResultReceiver addressResultReceiver;
 
-    private static final String ADDRESS_REQUESTED_KEY = "address-request-pending";
+    private static final String ADDRESS_REQUEST_KEY = "address-request";
     private static final String LOCATION_ADDRESS_KEY = "location-address";
 
-    TextView textViewAddress;
-    Button buttonGetAddress;
+    private TextView textViewAddress;
+    private Button buttonGetAddress;
 
     private int LOCATION_PERMISSION = 100;
 
@@ -70,12 +69,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         buttonGetAddress.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                isAddressRequested = true;
                 getAddress(currentLocation);
             }
         });
 
         locationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        mAddressRequested = true;
 
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -97,8 +96,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.i(TAG,"Location result is available");
             }
         };
-
-        addressResultReceiver = new AddressResultReceiver(new Handler());
 
         updateValuesFromBundle(savedInstanceState);
         startGettingLocation();
@@ -179,18 +176,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onReceiveResult(int resultCode, Bundle resultData) {
-            mAddressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
-            textViewAddress.setText(mAddressOutput);
-            mAddressRequested = false;
-
+            if(resultCode==Constants.SUCCESS_RESULT){
+                locationAddress = resultData.getString(Constants.RESULT_DATA_KEY);
+                textViewAddress.setText(locationAddress);
+                isAddressRequested = false;
+                textViewAddress.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
+            }else {
+                locationAddress = resultData.getString(Constants.RESULT_DATA_KEY);
+                textViewAddress.setText(locationAddress);
+                textViewAddress.setTextColor(getResources().getColor(R.color.colorAccent));
+            }
         }
     }
 
     private void getAddress(Location location){
         if(!Geocoder.isPresent()){
-            Toast.makeText(this, "Geocoder not presetnt", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Geocoder not present", Toast.LENGTH_LONG).show();
         }else {
-            if(mAddressRequested){
+            if(isAddressRequested){
                 startAddressFetcherService();
             }
         }
@@ -198,6 +201,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void startAddressFetcherService(){
         Intent intent = new Intent(this,AddressFetcherService.class );
+        addressResultReceiver = new AddressResultReceiver(new Handler());
         intent.putExtra(Constants.RECEIVER, addressResultReceiver);
         intent.putExtra(Constants.LOCATION_DATA_EXTRA, currentLocation);
         startService(intent);
@@ -205,13 +209,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
-            if (savedInstanceState.keySet().contains(ADDRESS_REQUESTED_KEY)) {
-                mAddressRequested = savedInstanceState.getBoolean(ADDRESS_REQUESTED_KEY);
+            if (savedInstanceState.keySet().contains(ADDRESS_REQUEST_KEY)) {
+                isAddressRequested = savedInstanceState.getBoolean(ADDRESS_REQUEST_KEY);
             }
             if (savedInstanceState.keySet().contains(LOCATION_ADDRESS_KEY)) {
-                mAddressOutput = savedInstanceState.getString(LOCATION_ADDRESS_KEY);
-                textViewAddress.setText(mAddressOutput);
-                Log.i(TAG, "Address: "+mAddressOutput);
+                locationAddress = savedInstanceState.getString(LOCATION_ADDRESS_KEY);
+                textViewAddress.setText(locationAddress);
+                Log.i(TAG, "Address: "+ locationAddress);
             }
         }
     }
