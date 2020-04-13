@@ -3,6 +3,6 @@
     <string name="title_activity_maps">Map</string>
     <string name="error_receiver_not_availale">ResultReceiver not received</string>
     <string name="error_address_unavailable">Address not available</string>
-    <string name="error_location_unavailable">Location not available, can\\'t fetch address</string>
+    <string name="error_location_unavailable">Location not available, can\'t fetch address</string>
     <string name="error_exception_while_getting_address">Exception while getting address</string>
 </resources>
