@@ -5,6 +5,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
@@ -15,6 +16,8 @@ import android.os.ResultReceiver;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,6 +59,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private TextView textViewAddress;
     private Button buttonGetAddress;
 
+    private Switch switchBackgroundTracking;
+
     private int LOCATION_PERMISSION = 100;
 
     @Override
@@ -65,6 +70,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         textViewAddress = (TextView)findViewById(R.id.textViewAddress);
         buttonGetAddress = (Button)findViewById(R.id.buttonGetAddress);
+        switchBackgroundTracking = (Switch)findViewById(R.id.switchBackgroundTracking);
+
+        switchBackgroundTracking.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                String message = b? "Location Tracking Eanbled": "Location Tracking Disabled";
+                Toast.makeText(MapsActivity.this,message,Toast.LENGTH_SHORT ).show();
+                if(ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)== PackageManager.PERMISSION_GRANTED){
+                    Intent intent = new Intent(MapsActivity.this, BackgrondLocationTracker.class);
+                    BackgrondLocationTracker.enqueueWork(MapsActivity.this, intent);
+                }else {
+                    Toast.makeText(MapsActivity.this, "Permission needed", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        });
 
         buttonGetAddress.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -84,16 +106,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onLocationAvailability(LocationAvailability locationAvailability) {
                 super.onLocationAvailability(locationAvailability);
                 if(locationAvailability.isLocationAvailable()){
-                    Log.i(TAG,"Location is available");
+                    //Log.i(TAG,"Location is available");
                 }else {
-                    Log.i(TAG,"Location is unavailable");
+                    //Log.i(TAG,"Location is unavailable");
                 }
             }
 
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
-                Log.i(TAG,"Location result is available");
+                //Log.i(TAG,"Location result is available");
             }
         };
 
@@ -114,9 +136,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-
-
         // Add a marker in Sydney and move the camera
         LatLng currentPlace = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
         mMap.addMarker(new MarkerOptions().position(currentPlace).title("Marker in Sydney"));

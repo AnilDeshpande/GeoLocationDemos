@@ -6,6 +6,13 @@
     android:layout_height="match_parent"
     tools:context=".MapsActivity">
 
+    <Switch
+        android:id="@+id/switchBackgroundTracking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Enable Background Tracking" />
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
