@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
@@ -28,6 +29,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -57,14 +59,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Button buttonGetAddress;
 
     private int LOCATION_PERMISSION = 100;
+    private UiSettings googleMapUiSettings;
+    private LatLng markedLocation;
+
+    SupportMapFragment mapFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        textViewAddress = (TextView)findViewById(R.id.textViewAddress);
-        buttonGetAddress = (Button)findViewById(R.id.buttonGetAddress);
+        textViewAddress = (TextView) findViewById(R.id.textViewAddress);
+        buttonGetAddress = (Button) findViewById(R.id.buttonGetAddress);
 
         buttonGetAddress.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,21 +85,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(UPDATE_INTERVAL);
-        locationCallback = new LocationCallback(){
+        locationCallback = new LocationCallback() {
             @Override
             public void onLocationAvailability(LocationAvailability locationAvailability) {
                 super.onLocationAvailability(locationAvailability);
-                if(locationAvailability.isLocationAvailable()){
-                    Log.i(TAG,"Location is available");
-                }else {
-                    Log.i(TAG,"Location is unavailable");
+                if (locationAvailability.isLocationAvailable()) {
+                    Log.i(TAG, "Location is available");
+                } else {
+                    Log.i(TAG, "Location is unavailable");
                 }
             }
 
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
-                Log.i(TAG,"Location result is available");
+                Log.i(TAG, "Location result is available");
             }
         };
 
@@ -114,14 +120,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MapsActivity.this,
+                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_PERMISSION);
 
+        }else{
+            mMap.setMyLocationEnabled(true);
 
+        }
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                Log.i(TAG,"logitude: "+latLng.longitude+", latitude"+ latLng.latitude);
+                setMarker(latLng);
+            }
+        });
 
         // Add a marker in Sydney and move the camera
         LatLng currentPlace = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-        mMap.addMarker(new MarkerOptions().position(currentPlace).title("Marker in Sydney"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(currentPlace));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(currentPlace));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPlace, 15.0f));
+
+        googleMapUiSettings = googleMap.getUiSettings();
+        googleMapUiSettings.setZoomControlsEnabled(true);
+        googleMapUiSettings.setMyLocationButtonEnabled(true);
 
     }
 
@@ -133,7 +157,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 @Override
                 public void onSuccess(Location location) {
                     currentLocation = location;
-                    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+                    mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
                     mapFragment.getMapAsync(MapsActivity.this);
 
                 }
@@ -218,5 +242,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.i(TAG, "Address: "+ locationAddress);
             }
         }
+    }
+
+    private void setMarker(LatLng latLng){
+        currentLocation = Utils.getLocationFromLatLong(latLng);
+        mMap.clear();
+        mMap.addMarker(new MarkerOptions().position(latLng).title("Current Location"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15.0f));
     }
 }
